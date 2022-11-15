@@ -1,9 +1,7 @@
 open class RootModule {
     
-    let name: String
+    let name: String = "root"
     
-    public init(name: String = "root") {
-        self.name = name
-    }
+    public init() {}
     
 }
