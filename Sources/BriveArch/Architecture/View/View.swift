@@ -1,0 +1,3 @@
+open class View: AnyView {
+    
+}
