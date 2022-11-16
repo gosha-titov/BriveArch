@@ -14,7 +14,18 @@ open class Module {
     public private(set) var state: State = .inactive
     
     /// A `Boolean` value that indicates whether this module is currently active.
-    public var isActive: Bool { state == .active }
+    public final var isActive: Bool { state == .active }
+    
+    /// A `Boolean` value that indicates whether this module is currently loaded into memory.
+    public private(set) var isLoaded: Bool = false
+    
+    /// A `Boolean` value that indicates whether this module can start working.
+    ///
+    /// You usually use this property when you need to get some context data
+    /// in order its interactor to perform additional initialization.
+    ///
+    /// Set `False` if this module cannot start for some reasons.
+    public var canStart: Bool = true
     
     /// A `String` value that represents a path from the root module to this.
     ///
@@ -25,16 +36,23 @@ open class Module {
     public internal(set) var path: String?
     
     
+    // MARK: - Shared Properties
+    
+    /// An object that logs messages, it is set by a parent module.
+    internal weak var logger: ModuleLoggerProtocol?
+    
+    
     // MARK: - Components
     
     internal var interactor: AnyInteractor
     internal var router: Router
     internal var view: AnyView?
     
+    /// A builder that can create child modules.
     private var builder: BuilderProtocol?
     
     
-    // MARK: Bind-Unbind Components
+    // MARK: - Bind-Unbind Components
     
     /// Binds module components to each other.
     private func bindComponents() -> Void {
@@ -48,6 +66,60 @@ open class Module {
         interactor._router = nil
         interactor._view = nil
         view?._interactor = nil
+    }
+    
+    // MARK: - Other
+    
+    /// Logs messages from this module.
+    private func log(_ message: String, level: RootModule.LogLevel) -> Void {
+        logger?.log(message, level: level, from: name)
+    }
+    
+    
+    // MARK: - Lifecycle
+    
+    /// Called when a parent module has attached this module to its children.
+    internal func load() -> Void {
+        state = .loaded
+        isLoaded = true
+        bindComponents()
+        log("loaded into memory", level: .info)
+        interactor.moduleDidLoad()
+    }
+    
+    /// Called when this module should start working.
+    internal func start() -> Void {
+        state = .active
+        log("started working", level: .info)
+        interactor.moduleDidStart()
+    }
+    
+    /// Called when a parent module suspends working of this module, or when a child module of this becomes active.
+    internal func suspend() -> Void {
+        interactor.moduleWillSuspend()
+        state = .suspended
+        log("suspended working", level: .info)
+    }
+    
+    /// Called when this module should resume working.
+    internal func resume() -> Void {
+        state = .active
+        log("resumed working", level: .info)
+        interactor.moduleDidResume()
+    }
+    
+    /// Called when a parent module stops working of this module, or when this module completes.
+    internal func stop() -> Void {
+        interactor.moduleWillStop()
+        state = .stopped
+        log("stopped working", level: .info)
+    }
+    
+    /// Called when a parent module is about to detach this module from its children.
+    internal func unload() -> Void {
+        interactor.moduleWillUnload()
+        state = .inactive
+        log("unloaded from memory", level: .info)
     }
     
     
