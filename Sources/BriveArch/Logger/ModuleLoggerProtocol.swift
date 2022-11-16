@@ -1,7 +1,7 @@
 public protocol ModuleLoggerProtocol: AnyObject {
     
-    typealias Level = RootModule.LogLevel
+    typealias LogLevel = RootModule.LogLevel
     
-    func log(_ message: String, level: Level, from module: String) -> Void
+    func log(_ message: String, level: LogLevel, from module: String) -> Void
     
 }

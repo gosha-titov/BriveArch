@@ -2,8 +2,8 @@ import UIKit
 
 open class RootModule {
     
-    public enum LogLevel {
-        case info, warning
+    public enum LogLevel: Int {
+        case debug, info, warning, error, fatal
     }
     
     public let name: String = "root"
